@@ -32,10 +32,16 @@
       margin-top: 0;
     }
 
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
+    .expense-form button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 5px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
     }
 
     .right-section {
@@ -61,18 +67,13 @@
       border-radius: 4px;
     }
 
-    input,
-    button {
+    input {
       padding: 8px;
       margin: 5px;
       border: 1px solid #ddd;
       border-radius: 4px;
-    }
-
-    button {
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
+      width: calc(100% - 18px);
+      box-sizing: border-box;
     }
 
     button.delete {
@@ -150,9 +151,7 @@
         <input type="number" id="amount" placeholder="Amount" step="0.01" required>
         <input type="text" id="category" placeholder="Category">
         <input type="date" id="date" required>
-        <div class="form-actions">
-          <button type="submit" id="submit-btn">Add Expense</button>
-        </div>
+        <button type="submit" id="submit-btn">Add Expense</button>
       </form>
     </div>
     <!-- Right: Total and List -->
@@ -184,7 +183,7 @@
     </div>
   </div>
   <script>
-    const API_URL = 'http://localhost:3001/expenses';
+    const API_URL = 'http://localhost:3000/expenses';
     const addModeBtn = document.getElementById('addModeBtn');
     const updateModeBtn = document.getElementById('updateModeBtn');
     const expenseForm = document.getElementById('expenseForm');
@@ -196,11 +195,21 @@
     const tableTotalAmount = document.getElementById('tableTotalAmount');
     let isUpdateMode = false;
 
+    // Format date to dd/mm/yyyy
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
     // Fetch and render expenses
     async function fetchExpenses() {
       try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('Failed to fetch expenses');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const expenses = await response.json();
         renderExpenses(expenses);
       } catch (error) {
@@ -214,20 +223,19 @@
       let total = 0;
 
       expenses.forEach(expense => {
-        if (!expense.amount) return; // Skip invalid expenses
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${expense.description || ''}</td>
           <td>$${parseFloat(expense.amount).toFixed(2)}</td>
           <td>${expense.category || ''}</td>
-          <td>${expense.date || ''}</td>
+          <td>${formatDate(expense.date)}</td>
           <td>
             <button class="edit" data-id="${expense.id}">✏️</button>
             <button class="delete" data-id="${expense.id}">🗑️</button>
           </td>
         `;
         expensesContainer.appendChild(row);
-        total += parseFloat(expense.amount);
+        total += parseFloat(expense.amount || 0);
       });
 
       totalAmount.textContent = total.toFixed(2);
@@ -257,7 +265,7 @@
     async function handleEdit(id) {
       try {
         const response = await fetch(`${API_URL}/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch expense');
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const expense = await response.json();
         isUpdateMode = true;
         updateModeBtn.classList.add('active');
@@ -266,9 +274,10 @@
         submitBtn.textContent = 'Update Expense';
         expenseIdInput.value = expense.id;
         document.getElementById('description').value = expense.description || '';
-        document.getElementById('amount').value = expense.amount;
+        document.getElementById('amount').value = expense.amount || '';
         document.getElementById('category').value = expense.category || '';
         document.getElementById('date').value = expense.date || '';
+        console.log('Edit mode: ID set to', expenseIdInput.value);
       } catch (error) {
         console.error('Error fetching expense:', error);
       }
@@ -277,29 +286,34 @@
     // Handle form submission (Add or Update)
     expenseForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const id = expenseIdInput.value;
+      console.log('Submitting form: isUpdateMode=', isUpdateMode, 'id=', id);
       const expense = {
         description: document.getElementById('description').value,
         amount: parseFloat(document.getElementById('amount').value),
         category: document.getElementById('category').value,
         date: document.getElementById('date').value
       };
-      const id = expenseIdInput.value;
 
       try {
-        if (isUpdateMode && id) {
+        if (id && isUpdateMode) {
           // Update expense
-          await fetch(`${API_URL}/${id}`, {
+          console.log('Sending PUT request for ID:', id);
+          const response = await fetch(`${API_URL}/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(expense)
           });
+          if (!response.ok) throw new Error(`PUT failed: ${response.status}`);
         } else {
           // Add expense
-          await fetch(API_URL, {
+          console.log('Sending POST request');
+          const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(expense)
           });
+          if (!response.ok) throw new Error(`POST failed: ${response.status}`);
         }
         setAddMode();
         fetchExpenses();
@@ -311,7 +325,8 @@
     // Handle delete
     async function handleDelete(id) {
       try {
-        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error(`DELETE failed: ${response.status}`);
         fetchExpenses();
       } catch (error) {
         console.error('Error deleting expense:', error);
@@ -326,6 +341,9 @@
       addModeBtn.classList.remove('active');
       formTitle.textContent = 'Update Expense';
       submitBtn.textContent = 'Update Expense';
+      expenseIdInput.value = '';
+      expenseForm.reset();
+      console.log('Update mode activated, ID cleared');
     });
 
     // Initial fetch
