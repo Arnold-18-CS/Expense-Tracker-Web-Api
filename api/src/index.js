@@ -11,8 +11,11 @@ app.use(express.json());
 
 app.use('/expenses', expenseRoutes);
 
-app.get('/test', (req, res) => res.json({ message: 'Server is up' }));
+app.get('/test', (req, res) => {
+    console.log('Server is up and running');
+    res.json({ message: 'Server is up' });
+});
 
-app.listen(port, ()=>{
+app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`)
 });

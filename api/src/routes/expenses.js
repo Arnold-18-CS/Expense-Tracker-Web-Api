@@ -6,6 +6,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM expenses');
+        console.log('Fetched all expenses successfully');
         res.json(result.rows);
     } catch (err) {
         console.error(err.stack);
@@ -17,6 +18,7 @@ router.get('/', async (req, res) => {
 router.get('/total', async (req, res) => {
     try {
         const result = await pool.query('SELECT SUM(amount) AS total FROM expenses');
+        console.log('Fetched total expenses successfully');
         res.status(200).json({ total: result.rows[0].total });
     } catch (err) {
         console.error(err.stack);
@@ -32,6 +34,7 @@ router.post('/', async (req, res) => {
             'INSERT INTO expenses (amount, category, description, date) VALUES ($1, $2, $3, $4) RETURNING *',
             [amount, category, description, date]
         );
+        console.log('Added new expense successfully');
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
@@ -51,6 +54,7 @@ router.put('/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Expense not found' });
         }
+        console.log('Updated expense successfully');
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
@@ -66,6 +70,7 @@ router.delete('/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Expense not found' });
         }
+        console.log('Expense deleted successfully');
         res.json({ message: 'Expense deleted' });
     } catch (err) {
         console.error(err.stack);
