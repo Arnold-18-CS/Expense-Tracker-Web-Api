@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error(err.stack);
-        res.status(500).json({ error: 'Internal server error: ${err.stack}' });
+        res.status(500).json({ error: `Internal server error: ${err.stack}` });
     }
 });
 
@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
-        res.status(500).json({ error: 'Internal server error: ${err.stack}' });
+        res.status(500).json({ error: `Internal server error: ${err.stack}` });
     }
 });
 
@@ -54,7 +54,7 @@ router.put('/:id', async (req, res) => {
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Internal server error: ${err.stack}` });
     }
 });
 
@@ -69,7 +69,7 @@ router.delete('/:id', async (req, res) => {
         res.json({ message: 'Expense deleted' });
     } catch (err) {
         console.error(err.stack);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: `Internal server error: ${err.stack}`});
     }
 });
 
