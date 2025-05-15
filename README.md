@@ -20,7 +20,7 @@ Follow these steps to get the Expense Tracker up and running:
 
 1. Clone the Repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/Arnold-18-CS/Expense-Tracker-Web-Api.git
 cd Expense-Tracker-Web-Api
 ```
 
