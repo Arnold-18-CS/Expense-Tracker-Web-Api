@@ -1,8 +1,12 @@
 # Expense Tracker
 A full-stack application to track expenses, built with a static HTML frontend (served via Nginx), a Node.js/Express backend, and a PostgreSQL database. The app allows users to add, update, delete, and view expenses, with a date picker restricted to today or earlier (formatted as dd/mm/yyyy). A sample expense is included for testing.
 
-## Features
+## Project Structure
+- project/frontend/: Contains the static HTML frontend (index.html) and its Dockerfile.
+- project/api: Contains the Node.js/Express backend (src/index.js, src/db.js, src/routes/expenses.js) and its Dockerfile.
+- docker-compose.yml: Defines the services (frontend, backend, db).
 
+## Features
 - Add, update, and delete expenses with description, amount, category, and date.
 - View a table of all expenses with a total amount calculation.
 - Date picker restricted to today or earlier (e.g., max date: 15/05/2025).
@@ -18,30 +22,56 @@ A full-stack application to track expenses, built with a static HTML frontend (s
 ## Setup Instructions
 Follow these steps to get the Expense Tracker up and running:
 
+### For Unix-like Systems (Linux, macOS, WSL)
 1. Clone the Repository:
+
 ```bash
 git clone https://github.com/Arnold-18-CS/Expense-Tracker-Web-Api.git
 cd Expense-Tracker-Web-Api
 ```
 
-
-2. Ensure Docker Desktop is Running:
-- Open Docker Desktop and ensure it’s running on your machine.
-
-3. Kill any other containers:
-- Do this to prevent any port conflicts and resource leakage, using the command:
+2. Run the Setup Script:
 ```bash
-docker ps -a
-docker stop <container-id>
+chmod +x setup.sh
+./setup.sh
 ```
+  -This script checks prerequisites, clones the repo, and starts the app with Docker Compose.
 
-3. Start the Application with Docker Compose:
 
+3. Manual Setup (if script fails):
+- Ensure Docker Desktop is running.
+- Start the application:
 ```bash
 docker-compose up --build
 ```
+- Access at http://localhost:8080.
 
-- This command builds and starts three containers:
+#### For Windows (PowerShell)
+
+1. Clone the Repository:
+
+```bash
+git clone https://github.com/Arnold-18-CS/Expense-Tracker-Web-Api.git
+cd Expense-Tracker-Web-Api
+```
+
+2. Run the Setup Script:
+- Open PowerShell as Administrator:
+- Press Win + S, type PowerShell, right-click, and select "Run as Administrator".
+- Set execution policy (if needed):
+```bash
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+- Press Y and Enter to allow running scripts.
+
+3. Run the script:
+```bash
+.\setup.ps1
+```
+- This script checks prerequisites, clones the repo, and starts the app with Docker Compose.
+
+
+- This setup builds and starts three containers:
   - frontend: Serves the static HTML frontend via Nginx (port 8080).
   = api: Runs the Node.js/Express API (port 3000).
   - db: Runs PostgreSQL (port 5432).
@@ -81,8 +111,16 @@ docker-compose up --build
 netstat -aon | findstr :5432
 taskkill /PID <pid> /F
 ```
-  - Or modify docker-compose.yml to use a different port (e.g., "5433:5432" for the db service), then rerun docker-compose up --build.
-
+  - Or modify docker-compose.yml to use a different port (e.g., "5433:5432" for the db service), then rerun:
+```bash
+docker-compose up --build.
+```
+  - Option 2: Kill any other containers:
+- Do this to prevent any port conflicts and resource leakage, using the command:
+```bash
+docker ps -a
+docker stop <container-id>
+```
 
 - Database Connection Issues:
   - If the backend logs ECONNREFUSED, the database isn’t ready. The app will retry up to 10 times (5 seconds each). If it fails, check if the db container is running:
@@ -96,8 +134,6 @@ docker-compose down --volumes
 docker-compose up --build
 ```
 
-
-
 - Fresh Start:
   - To reset the database (e.g., clear all expenses), run:
 ```bash
@@ -105,12 +141,3 @@ docker-compose down --volumes
 docker-compose up --build
 ```
   - This will recreate the expenses table with the sample expense.
-
-
-
-## Project Structure
-- project/frontend/: Contains the static HTML frontend (index.html) and its Dockerfile.
-- project/api: Contains the Node.js/Express backend (src/index.js, src/db.js, src/routes/expenses.js) and its Dockerfile.
-- docker-compose.yml: Defines the services (frontend, backend, db).
-- kubernetes/: Empty, reserved for future Kubernetes deployment.
-
