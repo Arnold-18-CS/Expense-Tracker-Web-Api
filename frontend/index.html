@@ -165,7 +165,7 @@
     <!-- Right: Total and List -->
     <div class="right-section">
       <div class="total">
-        Total Expense: $<span id="totalAmount">0.00</span>
+        Total Expense: KES <span id="totalAmount">0.00</span>
       </div>
       <div class="expense-list">
         <h2>Expenses</h2>
@@ -173,7 +173,7 @@
           <thead>
             <tr>
               <th>Description</th>
-              <th>Amount ($)</th>
+              <th>Amount (KES)</th>
               <th>Category</th>
               <th>Date</th>
               <th>Action</th>
@@ -183,7 +183,7 @@
           <tfoot>
             <tr>
               <td colspan="1"><strong>Total</strong></td>
-              <td colspan="4"><strong>$<span id="tableTotalAmount">0.00</span></strong></td>
+              <td colspan="4"><strong>KES <span id="tableTotalAmount">0.00</span></strong></td>
             </tr>
           </tfoot>
         </table>
@@ -257,7 +257,7 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>${expense.description || ''}</td>
-          <td>$${parseFloat(expense.amount).toFixed(2)}</td>
+          <td>KES ${parseFloat(expense.amount).toFixed(2)}</td>
           <td>${expense.category || ''}</td>
           <td>${formatDate(expense.date)}</td>
           <td>
