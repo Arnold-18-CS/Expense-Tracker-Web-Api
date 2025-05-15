@@ -9,7 +9,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.use('/expenses', expenseRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 app.get('/test', (req, res) => {
     console.log('Server is up and running');
