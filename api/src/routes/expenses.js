@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
             'INSERT INTO expenses (amount, category, description, date) VALUES ($1, $2, $3, $4) RETURNING *',
             [amount, category, description, date]
         );
-        console.log('Added new expense successfully');
+        console.log(`Added new expense successfully: ${result.rows[0]}`);
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
@@ -54,7 +54,7 @@ router.put('/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Expense not found' });
         }
-        console.log('Updated expense successfully');
+        console.log(`Updated expense successfully:  ${result.rows[0]}`);
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err.stack);
