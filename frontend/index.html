@@ -53,6 +53,27 @@
       justify-content: flex-start;
     }
 
+    .edit-form {
+      background: #f4f4f4;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      display: none;
+      /* Hidden by default */
+    }
+
+    .edit-form button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 5px;
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
     .expense-list {
       margin-top: 20px;
     }
@@ -84,28 +105,6 @@
       font-size: 1.2em;
       font-weight: bold;
       margin-top: 0;
-    }
-
-    .toggle-buttons {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .toggle-buttons .toggle {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ccc;
-      background: #e0e0e0;
-      cursor: pointer;
-      border-radius: 5px;
-      font-weight: bold;
-    }
-
-    .toggle-buttons .toggle.active {
-      background: #396ee1;
-      color: white;
-      border: 2px solid #396ee1;
     }
 
     .expense-list table {
@@ -147,22 +146,17 @@
   <div class="container">
     <!-- Left: Expense Form -->
     <div class="expense-form">
-      <div class="toggle-buttons">
-        <button type="button" id="addModeBtn" class="toggle active">Add</button>
-        <button type="button" id="updateModeBtn" class="toggle">Update</button>
-      </div>
-      <h2 id="form-title">Add Expense</h2>
+      <h2>Add Expense</h2>
       <form id="expenseForm">
-        <input type="hidden" id="expense-id">
-        <input type="text" id="description" placeholder="Description" required>
-        <input type="number" id="amount" placeholder="Amount" step="0.01" required>
-        <input type="text" id="category" placeholder="Category">
-        <input type="date" id="date" required>
-        <p id="date-error" class="error">Date cannot be in the future.</p>
-        <button type="submit" id="submit-btn">Add Expense</button>
+        <input type="text" id="add-description" placeholder="Description" required>
+        <input type="number" id="add-amount" placeholder="Amount" step="0.01" required>
+        <input type="text" id="add-category" placeholder="Category">
+        <input type="date" id="add-date" required>
+        <p id="add-date-error" class="error">Date cannot be in the future.</p>
+        <button type="submit">Add Expense</button>
       </form>
     </div>
-    <!-- Right: Total and List -->
+    <!-- Right: Total, List, and Edit Form -->
     <div class="right-section">
       <div class="total">
         Total Expense: KES <span id="totalAmount">0.00</span>
@@ -188,36 +182,53 @@
           </tfoot>
         </table>
       </div>
+      <!-- Edit Form -->
+      <div class="edit-form" id="editForm">
+        <h2>Edit Expense</h2>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-description" placeholder="Description" required>
+        <input type="number" id="edit-amount" placeholder="Amount" step="0.01" required>
+        <input type="text" id="edit-category" placeholder="Category">
+        <input type="date" id="edit-date" required>
+        <p id="edit-date-error" class="error">Date cannot be in the future.</p>
+        <button type="button" id="save-edit-btn">Save Changes</button>
+        <button type="button" id="cancel-edit-btn">Cancel</button>
+      </div>
     </div>
   </div>
   <script>
     const API_URL = 'http://localhost:30080/api/expenses';
-    // const API_URL = 'http://localhost:3000/expenses';
-    const addModeBtn = document.getElementById('addModeBtn');
-    const updateModeBtn = document.getElementById('updateModeBtn');
     const expenseForm = document.getElementById('expenseForm');
-    const formTitle = document.getElementById('form-title');
-    const submitBtn = document.getElementById('submit-btn');
-    const expenseIdInput = document.getElementById('expense-id');
+    const editForm = document.getElementById('editForm');
     const expensesContainer = document.getElementById('expensesContainer');
     const totalAmount = document.getElementById('totalAmount');
     const tableTotalAmount = document.getElementById('tableTotalAmount');
-    const dateInput = document.getElementById('date');
-    const dateError = document.getElementById('date-error');
-    let isUpdateMode = false;
+    const addDescription = document.getElementById('add-description');
+    const addAmount = document.getElementById('add-amount');
+    const addCategory = document.getElementById('add-category');
+    const addDate = document.getElementById('add-date');
+    const addDateError = document.getElementById('add-date-error');
+    const editId = document.getElementById('edit-id');
+    const editDescription = document.getElementById('edit-description');
+    const editAmount = document.getElementById('edit-amount');
+    const editCategory = document.getElementById('edit-category');
+    const editDate = document.getElementById('edit-date');
+    const editDateError = document.getElementById('edit-date-error');
+    const saveEditBtn = document.getElementById('save-edit-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
     // Set max date to today (EAT)
     function setMaxDateToday() {
       const today = new Date();
-      // Adjust to EAT (UTC+3) explicitly
       const eatOffset = 3 * 60; // EAT is UTC+3 in minutes
       const utcDate = new Date(today.getTime() + (today.getTimezoneOffset() * 60000));
       const eatDate = new Date(utcDate.getTime() + (eatOffset * 60000));
       const year = eatDate.getFullYear();
       const month = String(eatDate.getMonth() + 1).padStart(2, '0');
       const day = String(eatDate.getDate()).padStart(2, '0');
-      const maxDate = `${year}-${month}-${day}`; // e.g., 2025-05-15
-      dateInput.setAttribute('max', maxDate);
+      const maxDate = `${year}-${month}-${day}`;
+      addDate.setAttribute('max', maxDate);
+      editDate.setAttribute('max', maxDate);
       return maxDate;
     }
 
@@ -257,15 +268,15 @@
       expenses.forEach(expense => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${expense.description || ''}</td>
-          <td>KES ${parseFloat(expense.amount).toFixed(2)}</td>
-          <td>${expense.category || ''}</td>
-          <td>${formatDate(expense.date)}</td>
-          <td>
-            <button class="edit" data-id="${expense.id}">✏️</button>
-            <button class="delete" data-id="${expense.id}">🗑️</button>
-          </td>
-        `;
+            <td>${expense.description || ''}</td>
+            <td>KES ${parseFloat(expense.amount).toFixed(2)}</td>
+            <td>${expense.category || ''}</td>
+            <td>${formatDate(expense.date)}</td>
+            <td>
+              <button class="edit" data-id="${expense.id}">✏️</button>
+              <button class="delete" data-id="${expense.id}">🗑️</button>
+            </td>
+          `;
         expensesContainer.appendChild(row);
         total += parseFloat(expense.amount || 0);
       });
@@ -282,89 +293,90 @@
       });
     }
 
-    // Switch to Add Mode
-    function setAddMode() {
-      isUpdateMode = false;
-      addModeBtn.classList.add('active');
-      updateModeBtn.classList.remove('active');
-      formTitle.textContent = 'Add Expense';
-      submitBtn.textContent = 'Add Expense';
-      expenseIdInput.value = '';
-      expenseForm.reset();
-      setMaxDateToday();
-      dateError.style.display = 'none';
-    }
-
-    // Switch to Update Mode and populate form
+    // Handle edit by showing the edit form
     async function handleEdit(id) {
       try {
         const response = await fetch(`${API_URL}/${id}`);
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const expense = await response.json();
-        isUpdateMode = true;
-        updateModeBtn.classList.add('active');
-        addModeBtn.classList.remove('active');
-        formTitle.textContent = 'Update Expense';
-        submitBtn.textContent = 'Update Expense';
-        expenseIdInput.value = expense.id;
-        document.getElementById('description').value = expense.description || '';
-        document.getElementById('amount').value = expense.amount || '';
-        document.getElementById('category').value = expense.category || '';
-        document.getElementById('date').value = expense.date || '';
-        setMaxDateToday();
-        dateError.style.display = 'none';
-        console.log('Edit mode: ID set to', expenseIdInput.value);
+        editId.value = expense.id;
+        editDescription.value = expense.description || '';
+        editAmount.value = expense.amount || '';
+        editCategory.value = expense.category || '';
+        editDate.value = expense.date || '';
+        editDateError.style.display = 'none';
+        editForm.style.display = 'block'; // Show the edit form
       } catch (error) {
         console.error('Error fetching expense:', error);
       }
     }
 
-    // Handle form submission (Add or Update)
+    // Handle form submission to add expense
     expenseForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = expenseIdInput.value;
-      const dateValue = document.getElementById('date').value;
-      console.log('Submitting form: isUpdateMode=', isUpdateMode, 'id=', id, 'date=', dateValue);
+      const dateValue = addDate.value;
 
-      // Validate date
       if (!isValidDate(dateValue)) {
-        dateError.style.display = 'block';
+        addDateError.style.display = 'block';
         return;
       }
-      dateError.style.display = 'none';
+      addDateError.style.display = 'none';
 
       const expense = {
-        description: document.getElementById('description').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        category: document.getElementById('category').value,
+        description: addDescription.value,
+        amount: parseFloat(addAmount.value),
+        category: addCategory.value,
         date: dateValue
       };
 
       try {
-        if (id && isUpdateMode) {
-          // Update expense
-          console.log('Sending PUT request for ID:', id);
-          const response = await fetch(`${API_URL}/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(expense)
-          });
-          if (!response.ok) throw new Error(`PUT failed: ${response.status}`);
-        } else {
-          // Add expense
-          console.log('Sending POST request');
-          const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(expense)
-          });
-          if (!response.ok) throw new Error(`POST failed: ${response.status}`);
-        }
-        setAddMode();
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expense)
+        });
+        if (!response.ok) throw new Error(`POST failed: ${response.status}`);
+        expenseForm.reset();
         fetchExpenses();
       } catch (error) {
-        console.error('Error saving expense:', error);
+        console.error('Error adding expense:', error);
       }
+    });
+
+    // Handle save changes from edit form
+    saveEditBtn.addEventListener('click', async () => {
+      const dateValue = editDate.value;
+
+      if (!isValidDate(dateValue)) {
+        editDateError.style.display = 'block';
+        return;
+      }
+      editDateError.style.display = 'none';
+
+      const expense = {
+        description: editDescription.value,
+        amount: parseFloat(editAmount.value),
+        category: editCategory.value,
+        date: dateValue
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/${editId.value}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expense)
+        });
+        if (!response.ok) throw new Error(`PUT failed: ${response.status}`);
+        editForm.style.display = 'none'; // Hide the edit form
+        fetchExpenses();
+      } catch (error) {
+        console.error('Error updating expense:', error);
+      }
+    });
+
+    // Handle cancel edit
+    cancelEditBtn.addEventListener('click', () => {
+      editForm.style.display = 'none';
     });
 
     // Handle delete
@@ -377,21 +389,6 @@
         console.error('Error deleting expense:', error);
       }
     }
-
-    // Toggle mode buttons
-    addModeBtn.addEventListener('click', setAddMode);
-    updateModeBtn.addEventListener('click', () => {
-      isUpdateMode = true;
-      updateModeBtn.classList.add('active');
-      addModeBtn.classList.remove('active');
-      formTitle.textContent = 'Update Expense';
-      submitBtn.textContent = 'Update Expense';
-      expenseIdInput.value = '';
-      expenseForm.reset();
-      setMaxDateToday();
-      dateError.style.display = 'none';
-      console.log('Update mode activated, ID cleared');
-    });
 
     // Initialize max date on page load
     setMaxDateToday();
